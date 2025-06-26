@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# File: script/console
+
+# Check if ripl is installed; if it is, use it as console
+`rbenv which ripl 2>/dev/null`
+if $? # Non-zero return code: ripl does not exist
+  interpreter = RUBY_PLATFORM =~ /(:?mswin|mingw)/ ? 'irb.bat' : 'irb'
+  libs =  " -r irb/completion"
+else # 0 return code: ripl exists
+  interpreter = 'ripl'
+  libs = ''
+end
+
+# Perhaps use a console_lib to store any extra methods I may want available in the cosole
+# libs << " -r #{File.dirname(__FILE__) + '/../lib/console_lib/console_logger.rb'}"
+project = `project`.chomp
+libs <<  " -r #{File.dirname(__FILE__) + "/../lib/#{project}.rb"}"
+puts "Loading #{project} gem"
+exec "#{interpreter} #{libs}"
