@@ -1,29 +1,56 @@
+require 'active_support'
+require 'active_support/core_ext'
+
 module WordMonger
   class Phrase
+    # Use ActiveSupport's String.demodulize and String.deconstantize
+    # Recognize "<lexicon>::<phrase>" syntax, and allow for
+    # excaping the colon (i.e. '\:' is not recognized as a separator)
+    def self.separate_lexicon(phrase)
+      lexicon = phrase.deconstantize
+      lexicon = nil if lexicon == ''
+      [lexicon, phrase.demodulize]
+    end
 
-    attr_reader :text, :dictionary
-    def initialize(text, dictionary: nil, remember: true)
-      self.text = text
+    attr_reader :lexicon, :text, :dictionary
+    attr_accessor :wordings
+    def initialize(text, dictionary: nil, lexicon: nil, remember: true)
+      unless lexicon
+        lexicon, text = self.class.separate_lexicon(text)
+      end
       @dictionary = dictionary || WordMonger.active_dictionary
-      @dictionary.add(self) if remember
+      @lexicon = lexicon
+      @text = text
+      @wordings = Wordings.new(self)
+      @words = nil
+      @synonymized = nil
+      @dictionary.add_phrase(self) if remember
     end
 
     def to_s
       @text
     end
 
+    def attributes
+      @wordings.attributes
+    end
+
+    def add_attribute(name, value)
+      @wordings.add_attribute(name, value)
+    end
+
+    def equivalent_to(phrase)
+      @wordings.merge!(phrase.wordings)
+      phrase.wordings = @wordings
+    end
+
+    # Needs to capture wordings
     def serialize
       to_s
     end
 
     def scanner
       @dictionary.scanner
-    end
-
-    def text=(text)
-      @text = text
-      @words = nil
-      @synonymized = nil
     end
 
     def get_words_for_text(text)
@@ -70,7 +97,7 @@ module WordMonger
       synonymized_text = text
       get_words_for_text(text).each do |word|
         lowercase_word = word.text.downcase
-        substitute = dictionary.preferred_synonyms[lowercase_word]
+        substitute = dictionary.synonym_substitutions[lowercase_word]
         if substitute
           synonymized_text = case_preserving_sub(synonymized_text, word.text, substitute)
         end
@@ -106,7 +133,7 @@ module WordMonger
         :downcase
       end
       search_phrase = synonymized_phrase.downcase
-      substitute_phrase = dictionary.normalized_wordings[search_phrase]
+      substitute_phrase = dictionary.wording_substitutions[search_phrase]
       synonymized_phrase = substitute_phrase if substitute_phrase
       normalized_phrase = synonymized_phrase
       get_words_for_text(normalized_phrase).each do |word|
@@ -119,16 +146,16 @@ module WordMonger
       normalize_text(self.text)
     end
 
-    def normalized
-      @normalized ||= self.class.new(normalize)
+    def normalized(remember: true)
+      @normalized ||= self.class.new(normalize, remember: remember)
     end
 
-    def normalized_name
-      normalized.phrase
+    def normalized_name(remember: true)
+      normalized(remember: remember).phrase
     end
 
-    def normalized_words
-      self.normalized.words
+    def normalized_words(remember: true)
+      self.normalized(remember: remember).words
     end
   end
 end

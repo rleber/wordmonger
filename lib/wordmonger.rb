@@ -24,15 +24,15 @@ module WordMonger
 end
 
 require_relative 'wordmonger/version'
+require_relative 'wordmonger/equivalents'
+require_relative 'wordmonger/synonyms'
+require_relative 'wordmonger/wordings'
 require_relative 'wordmonger/phrase'
 require_relative 'wordmonger/word'
 require_relative 'wordmonger/dictionary'
 require_relative 'wordmonger/scanner'
 
 module WordMonger
-
-  DEFAULT_VENDOR = :lego
-
   @@active_dictionary = WordMonger::Dictionary.new(nil)
 
   class << self

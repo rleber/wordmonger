@@ -1,11 +1,16 @@
 module WordMonger
   class Word
 
-    attr_reader :text, :dictionary
+    attr_reader :text, :dictionary, :synonyms
     def initialize(text, dictionary: nil)
       self.text = text
       @dictionary = dictionary || WordMonger.active_dictionary
+      @synonyms = Synonyms.new(self.text)
       @dictionary.add_word(self)
+    end
+
+    def to_s
+      @text
     end
 
     def serialize
@@ -14,6 +19,14 @@ module WordMonger
 
     def scanner
       @dictionary.scanner
+    end
+
+    def attributes
+      @synonyms.attributes
+    end
+
+    def add_attribute(name, value)
+      @synonyms.add_attribute(name, value)
     end
 
     def text=(text)
