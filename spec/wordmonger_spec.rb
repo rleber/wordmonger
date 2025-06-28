@@ -53,49 +53,97 @@ RSpec.describe WordMonger do
         expect(@new_dictionary.words.size).to eq(0)
       end
 
-      it 'contains no abbreviations' do
-        expect(@new_dictionary.abbreviations.size).to eq(0)
+      it 'contains no preferred synonyms' do
+        expect(@new_dictionary.preferred_synonyms.size).to eq(0)
       end
     end
 
-    describe 'abbreviations' do
+    describe 'preferred synonyms' do
       describe 'addition' do
         before :context do
           @text = 'Trans-Blue Green'
           @new_phrase = WordMonger::Phrase.new(@text)
           @dictionary = WordMonger.active_dictionary
-          @dictionary.add_abbreviation('trans-', 'transparent')
+          @dictionary.add_preferred_synonym('trans-', 'transparent')
         end
 
-        it 'increases the size of the abbreviation list' do
-          expect(@dictionary.abbreviations.size).to eq(1)
+        it 'increases the size of the preferred synonym list' do
+          expect(@dictionary.preferred_synonyms.size).to eq(1)
         end
 
-        it 'adds the new abbreviation to the dictionary' do
-          expect(@dictionary.abbreviations['trans-']).to eq('transparent')
-        end
-
-        after :context do
-          WordMonger.active_dictionary.delete(@text)
-        end
-      end
-
-      describe 'expanding' do
-        before :context do
-          @text = 'Trans-Blue Green'
-          @new_phrase = WordMonger::Phrase.new(@text)
-          @dictionary = WordMonger.active_dictionary
-          @dictionary.add_abbreviation('trans', 'transparent')
-        end
-
-        it 'works' do
-          expect(@new_phrase.expanded.text).to eq('Transparent-Blue Green')
+        it 'adds the new preferred synonym to the dictionary' do
+          expect(@dictionary.preferred_synonyms['trans-']).to eq('transparent')
         end
 
         after :context do
           @dictionary.delete(@text)
           @dictionary.delete('Transparent-Blue Green')
-          @dictionary.delete_abbreviation('trans-')
+          @dictionary.delete_preferred_synonym('trans-')
+        end
+      end
+
+      describe 'synonymizing' do
+        before :context do
+          @text = 'Trans-Blue Green'
+          @new_phrase = WordMonger::Phrase.new(@text)
+          @dictionary = WordMonger.active_dictionary
+          @dictionary.add_preferred_synonym('trans', 'transparent')
+        end
+
+        it 'works' do
+          expect(@new_phrase.synonymized.text).to eq('Transparent-Blue Green')
+        end
+
+        after :context do
+          @dictionary.delete(@text)
+          @dictionary.delete('Transparent-Blue Green')
+          @dictionary.delete_preferred_synonym('trans-')
+        end
+      end
+
+      describe 'normalized wordings' do
+        describe 'addition' do
+          before :context do
+            @text = 'Trans-Blue Green'
+            @new_phrase = WordMonger::Phrase.new(@text)
+            @dictionary = WordMonger.active_dictionary
+            @dictionary.add_normalized_wording('Trans-Blue Green', 'Translucent Aqua')
+          end
+
+          it 'increases the size of the normalized wording list' do
+            expect(@dictionary.normalized_wordings.size).to eq(1)
+          end
+
+          it 'adds the new normalized wording to the dictionary' do
+            expect(@dictionary.normalized_wordings['transparent-blue green']).to eq('translucent aqua')
+          end
+
+          after :context do
+            @dictionary.delete(@text)
+            @dictionary.delete('translucent aqua')
+            @dictionary.delete('Translucent Aqua')
+            @dictionary.delete_normalized_wording(@text)
+          end
+        end
+      end
+
+      describe 'normalizing' do
+        before :context do
+          @text = 'Trans-Blue Green'
+          @new_phrase = WordMonger::Phrase.new(@text)
+          @dictionary = WordMonger.active_dictionary
+          @dictionary.add_normalized_wording('Trans-Blue Green', 'Translucent Aqua')
+        end
+
+        it 'works' do
+          expect(@new_phrase.normalized.text).to eq('Translucent Aqua')
+        end
+
+        after :context do
+          @dictionary.delete(@text)
+          @dictionary.delete('translucent aqua')
+          @dictionary.delete('Translucent Aqua')
+          @dictionary.delete_normalized_wording(@text)
         end
       end
     end

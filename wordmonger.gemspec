@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Richard LeBer"]
   spec.email = ["richard.leber@gmail.com"]
 
-  spec.summary = "Work with words, synonyms, and abbreviations"
+  spec.summary = "Work with words, synonyms, and synonyms"
   # spec.description = "TODO: Write a longer description or delete this line."
   spec.homepage = "https://github.com/rleber/wordmonger"
   spec.license = "MIT"
