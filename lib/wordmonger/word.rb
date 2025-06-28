@@ -47,7 +47,7 @@ module WordMonger
       expanded_name = self.text
       self.words.each do |word|
         lowercase_word = word.downcase
-        substitute = dictionary.abbreviations[lowercase_word]
+        substitute = dictionary.preferred_synonyms[lowercase_word]
         if substitute
           expanded_name = case_preserving_sub(expanded_name, word, substitute)
         end
