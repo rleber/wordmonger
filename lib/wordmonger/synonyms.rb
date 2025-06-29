@@ -17,6 +17,8 @@ module WordMonger
       register if remember
     end
 
+    alias words strings
+
     def register
       WordMonger.active_dictionary.add_synonym(self)
     end

@@ -116,11 +116,10 @@ module WordMonger
       matches = []
       if in_order
         search_text = search_phrase.normalized(remember: false).text
-        binding.pry
-        matching_phrase = wording(search_text)
-        if matching_phrase
-          if matching_phrase.lexicon == search_phrase.lexicon || !in_lexicon
-            matches << matching_phrase
+        matching_wording = wording(search_text)
+        if matching_wording
+          if matching_wording.lexicons.include?(search_phrase.lexicon) || !in_lexicon
+            matches << matching_wording
           end
         end
       else

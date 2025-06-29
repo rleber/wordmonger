@@ -1,9 +1,11 @@
 module WordMonger
   class Wordings < Equivalents
+
+    attr_reader :phrases
     def initialize(*phrases, attributes: {}, remember: true)
-      phrases = phrases.flatten
+      @phrases = phrases.flatten
       expanded_phrases = []
-      phrases.each do |phrase|
+      @phrases.each do |phrase|
         wording = WordMonger.active_dictionary.wording(phrase)
         if wording
           expanded_phrases += wording.strings
@@ -17,8 +19,13 @@ module WordMonger
       register if remember
     end
 
+    def lexicons
+      phrases.map { |phrase| phrase.lexicon }.compact.uniq
+    end
+
     def add(phrase, preferred: false)
       synonymized_text = phrase.synonymize
+      @phrases << phrase
       super(synonymized_text, preferred)
     end
 
