@@ -77,6 +77,7 @@ RSpec.describe WordMonger do
         expect(word_text).to eq(%w{Trans- Blue Green})
       end
     end
+
     describe 'scanning' do
       it 'separates words' do
         phrase = WordMonger::Phrase.new('the quick, Brown fox')
@@ -262,22 +263,91 @@ RSpec.describe WordMonger do
   end
 
   describe 'serialization' do
+    describe 'with full set of values' do
+      before :example do
+        @text = 'Trans Blue Green'
+        @dictionary = WordMonger.active_dictionary
+        @dictionary.reset!
+        @word = WordMonger::Word.new('foo')
+        @synonym = WordMonger::Synonyms.new('transparent','trans')
+        @phrase1 = WordMonger::Phrase.new(@text)
+        @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
+        @wording = WordMonger::Wordings.new(@phrase1, @phrase2)
+        @serialized_hash = {
+          words: ['foo'],
+          synonyms: [['transparent', 'trans']],
+          phrases: ['Trans Blue Green', 'Translucent Aqua'],
+          wordings: [['transparent blue green', 'translucent aqua']]
+        }
+      end
+
+      it 'produces a hash' do
+        expect(@dictionary.serialize).to be_a(Hash)
+      end
+
+      it 'has the expected keys' do
+        expect(@dictionary.serialize.keys).to eq(%i{words phrases synonyms wordings})
+      end
+
+      it 'has the right content' do
+        expect(@dictionary.serialize).to eq(@serialized_hash)
+      end
+    end
+
+    describe 'with partial set of values' do
+      before :example do
+        @text = 'Trans Blue Green'
+        @dictionary = WordMonger.active_dictionary
+        @dictionary.reset!
+        @phrase1 = WordMonger::Phrase.new(@text)
+        @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
+        @wording = WordMonger::Wordings.new(@phrase1, @phrase2)
+      end
+
+      it 'produces a hash' do
+        expect(@dictionary.serialize).to be_a(Hash)
+      end
+
+      it 'has the expected keys' do
+        expect(@dictionary.serialize.keys).to eq(%i{phrases wordings})
+      end
+    end
+  end
+
+  describe 'deserialization' do
     before :example do
-      @text = 'Trans Blue Green'
       @dictionary = WordMonger.active_dictionary
-      @synonym = WordMonger::Synonyms.new('transparent','trans')
-      @phrase1 = WordMonger::Phrase.new(@text)
-      @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
-      @dictionary = WordMonger.active_dictionary
-      @wording = WordMonger::Wordings.new(@phrase1, @phrase2)
+      @serialized_hash = {
+        words: ['foo'],
+        synonyms: [['transparent', 'trans']],
+        phrases: ['Trans Blue Green', 'Translucent Aqua'],
+        wordings: [['transparent blue green', 'translucent aqua']]
+      }
     end
 
-    it 'produces a hash' do
-      expect(@dictionary.serialize).to be_a(Hash)
+    it 'works' do
+      expect {@dictionary.deserialize(@serialized_hash)}.not_to raise_error
     end
 
-    it 'has the expected keys' do
-      expect(@dictionary.serialize.keys).to eq(%i{words phrases synonyms wordings})
+    it 'defines the word' do
+      @dictionary.deserialize(@serialized_hash)
+      expect(@dictionary.words['foo']).not_to be(nil)
+    end
+
+    it 'defines the synonyms' do
+      @dictionary.deserialize(@serialized_hash)
+      expect(@dictionary.synonyms['transparent']).not_to be(nil)
+    end
+
+    it 'defines all the phrases' do
+      @dictionary.deserialize(@serialized_hash)
+      expect(@dictionary.phrases['Trans Blue Green']).not_to be(nil)
+      expect(@dictionary.phrases['Translucent Aqua']).not_to be(nil)
+    end
+
+    it 'defines the wordings' do
+      @dictionary.deserialize(@serialized_hash)
+      expect(@dictionary.wordings['transparent blue green']).not_to be(nil)
     end
   end
 
@@ -340,7 +410,11 @@ RSpec.describe WordMonger do
       end
 
       it 'responds to serialize' do
-        expect(@new_word.serialize).to eq(@text)
+        serialized_text = {
+          text: @text,
+          attributes: {'foo' => ['bar']}
+        }
+        expect(@new_word.serialize).to eq(serialized_text)
       end
 
       it 'increases the size of the dictionary' do
@@ -353,6 +427,24 @@ RSpec.describe WordMonger do
 
       it 'understands attributes' do
         expect(@new_word.attributes).to eq({'foo' => ['bar']})
+      end
+
+      it 'sets the generated flag off by default' do
+        expect(@new_word.generated).to be_nil
+      end
+    end
+
+    describe ':generated flag' do
+      before :context do
+        @dictionary = WordMonger.active_dictionary
+        @dictionary.reset!
+        @text = 'the'
+        @new_word = WordMonger::Word.new(@text, generated: true)
+        @new_word.add_attribute('foo', 'bar')
+      end
+
+      it 'is remembered' do
+        expect(@new_word.generated).to eq(true)
       end
     end
   end

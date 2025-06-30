@@ -58,5 +58,36 @@ module WordMonger
       raise UndefinedDictionary unless dictionary
       @@active_dictionary = dictionary
     end
+
+    def serialize_array(ary)
+      serialized_array = ary.map do |element|
+        element = element.serialize if element.respond_to?(:serialize)
+        element
+      end
+      serialized_array
+    end
+
+    def object_to_hash(object, *keys)
+      keys = keys.flatten
+      hash = {}
+      keys.each do |key|
+        value = object.send(key)
+        hash[key] = value if value
+      end
+      hash
+    end
+
+    def serialize_hash(hsh, flatten: false)
+      serialized_hash = hsh.inject({}) do |hsh, (key, value)|
+        value = value.serialize if value.respond_to?(:serialize)
+        hsh[key] = value
+        hsh
+      end
+      if flatten
+        serialized_hash.size != 1 ? serialized_hash : serialized_hash.values.first
+      else
+        serialized_hash
+      end
+    end
   end
 end

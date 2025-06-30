@@ -32,6 +32,10 @@ module WordMonger
       @text
     end
 
+    def has_attributes
+      attributes && attributes.size > 0
+    end
+
     def attributes
       @wordings.attributes
     end

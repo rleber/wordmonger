@@ -4,6 +4,7 @@ module WordMonger
       words = words.flatten
       expanded_words = []
       words.each do |word|
+        word = word.text if word.respond_to?(:text)
         word = Equivalents.normalize_text(word)
         synonym = WordMonger.active_dictionary.synonym(word)
         if synonym
@@ -15,6 +16,12 @@ module WordMonger
       end
       super(*expanded_words.uniq, attributes: attributes)
       register if remember
+    end
+
+    def add(word, preferred: false)
+      super(word, preferred: preferred)
+      word.synonyms = self
+      word
     end
 
     alias words texts

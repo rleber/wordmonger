@@ -1,7 +1,7 @@
 module WordMonger
   class Dictionary
 
-    class DuplicatePhrase < StandardError; end
+    class UnknownSerializationKey < StandardError; end
 
     attr_reader :name, :phrases, :words
     attr_reader :synonyms, :synonym_substitutions 
@@ -58,17 +58,50 @@ module WordMonger
 
     # Serialize words, synonyms, and wordings
     def serialize
-      {
-        words: @words.values.map { |value| value.serialize },
-        phrases: @phrases.values.map { |value| value.serialize },
-        synonyms: @synonyms.values.map { |value| value.serialize },
-        wordings: @wordings.values.map { |value| value.serialize }
-      }
+      serialized_hash = {}
+      non_generated_words = @words.reject { |_, word| word.generated && !word.has_attributes? }
+      serialized_hash[:words] = non_generated_words.map { |_, word| word.serialize } if non_generated_words.size > 0
+      serialized_hash[:phrases] = @phrases.values.map { |value| value.serialize } if @phrases.size > 0
+      non_trivial_synonyms = @synonyms.reject { |_, syn| syn.texts.size <= 1 }
+      serialized_hash[:synonyms] = non_trivial_synonyms.values.map { |value| value.serialize } if non_trivial_synonyms.size > 0
+      non_trivial_wordings = @wordings.reject { |_, wording| wording.texts.size <= 1 }
+      serialized_hash[:wordings] = non_trivial_wordings.values.map { |value| value.serialize } if non_trivial_wordings.size > 0
+      serialized_hash
     end
 
-    def synonym(synonym)
-      synonym = synonym.preferred if synonym.respond_to?(:preferred)
-      @synonyms[Equivalents.normalize_text(synonym)]
+    def deserialize(hash)
+      self.reset!
+      hash.each do |key, values|
+        normalized_key = key.downcase.to_sym
+        case normalized_key
+        when :words
+          values.each do |val|
+            add_word(Word.new(val))
+          end
+        when :phrases
+          values.each do |val|
+            add_phrase(Phrase.new(val))
+          end
+        when :synonyms
+          values.each do |syns|
+            word_objects = syns.map { |syn| Word.new(syn)}
+            Synonyms.new(*word_objects)
+          end
+        when :wordings
+          values.each do |phrases|
+            phrase_objects = phrases.map { |phrase| Phrase.new(phrase)}
+            Synonyms.new(*phrase_objects)
+          end
+        else
+          raise UnknownSerializationKey, "Unknown_key #{normalized_key.inspect}"
+        end
+      end
+    end
+
+
+    def synonym(syn)
+      syn = syn.preferred_text if syn.respond_to?(:preferred_text)
+      @synonyms[Equivalents.normalize_text(syn)]
     end
 
     def add_synonym(synonym)

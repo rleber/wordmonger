@@ -10,10 +10,10 @@ module WordMonger
 
     attr_reader :texts
     attr_accessor :attributes
-    def initialize(*texts, attributes: {})
+    def initialize(*texts, attributes: nil)
       texts = texts.flatten # In case someone passes an array
       @texts = texts.map { |text| normalize_text(text) }
-      @attributes = {}
+      @attributes = nil
     end
 
     def normalize_text(text)
@@ -29,9 +29,15 @@ module WordMonger
       end
     end
 
+    def has_attributes?
+      attributes && attributes.size > 0
+    end
+
+
     def add_attribute(name, value)
-      attributes[name] ||= []
-      attributes[name] << value
+      @attributes ||= {}
+      @attributes[name] ||= []
+      @attributes[name] << value
     end
 
     def preferred_text
@@ -59,18 +65,15 @@ module WordMonger
       @texts += other_equivalent.texts
     end
 
+    def to_hash
+      WordMonger.object_to_hash(self, :texts)
+    end
+
     def serialize
-      serialized_texts = @texts.map do |text|
-        if text.respond_to?(:serialize)
-          text.serialize
-        else
-          text
-        end
-      end
-      {
-        texts: @texts,
-        attributes: @attributes
-      }
+      serialized_texts = WordMonger.serialize_array(@texts)
+      serialized_hash = {texts: serialized_texts}
+      serialized_hash[:attributes] = attributes if has_attributes?
+      WordMonger.serialize_hash(serialized_hash, flatten: true)
     end
   end
 end

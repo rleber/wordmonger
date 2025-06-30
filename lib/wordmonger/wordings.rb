@@ -33,6 +33,7 @@ module WordMonger
       synonymized_text = phrase.synonymized_text
       unless self.index(synonymized_text)
         super(synonymized_text, preferred: preferred)
+        phrase.wordings = self
         if preferred
           @phrases.unshift(phrase.synonymized)
         else
