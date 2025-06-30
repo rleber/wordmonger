@@ -32,7 +32,7 @@ module WordMonger
       @text
     end
 
-    def has_attributes
+    def has_attributes?
       attributes && attributes.size > 0
     end
 
