@@ -6,6 +6,7 @@ repo_name = 'rleber/wordmonger.git'
 
 git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 
+gem 'activesupport'
 
 group :development, :test do
   # Basic Pry Setup

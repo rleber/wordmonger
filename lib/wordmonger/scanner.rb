@@ -41,7 +41,7 @@ module WordMonger
       else
         raise ScannerFailure, "Unknow scanner type: #{scanner.inspect}"
       end
-      words.map { |word| WordMonger::Word.new(word, dictionary: self.dictionary) }
+      words.map { |word| WordMonger::Word.new(word, dictionary: self.dictionary, generated: true) }
     end
   end
 end

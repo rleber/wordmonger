@@ -1,19 +1,49 @@
 module WordMonger
   class Word
 
-    attr_reader :text, :dictionary
-    def initialize(text, dictionary: nil)
+    attr_reader :text, :dictionary, :synonyms, :attributes, :generated
+    def initialize(text, dictionary: nil, attributes: nil, generated: nil)
       self.text = text
       @dictionary = dictionary || WordMonger.active_dictionary
+      @synonyms = Synonyms.new(self.text)
       @dictionary.add_word(self)
+      @attributes = nil
+      @attributes = add_attributes(attributes) if attributes
+      @generated = generated
+    end
+
+    def to_s
+      @text
+    end
+
+    def to_hash
+      WordMonger.object_to_hash(self, :text, :attributes, :generated)
     end
 
     def serialize
-      @text
+      WordMonger.serialize_hash(to_hash, flatten: true)
     end
 
     def scanner
       @dictionary.scanner
+    end
+
+    def has_attributes?
+      attributes && attributes.size > 0
+    end
+
+    def attributes
+      @synonyms.attributes
+    end
+
+    def add_attributes(hash)
+      hash.each { |key, value| add_attribute(key, value) }
+    end
+
+    def add_attribute(name, value)
+      @attributes ||= {}
+      @attributes[name] = value
+      @synonyms.add_attribute(name, value)
     end
 
     def text=(text)
