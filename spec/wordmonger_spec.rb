@@ -1,50 +1,9 @@
 # frozen_string_literal: true
+require 'pry-byebug'
 
 RSpec.describe WordMonger do
   it "has a version number" do
     expect(WordMonger::VERSION).not_to be nil
-  end
-
-  describe 'synonyms' do
-    describe 'serialization' do
-      before :example do
-        @text = 'Trans-Blue Green'
-        @new_phrase = WordMonger::Phrase.new(@text)
-        @dictionary = WordMonger.active_dictionary
-        @synonym = WordMonger::Synonyms.new('transparent','trans', 'tr')
-        @synonym.add_attribute('foo', 'bar')
-      end
-
-      it 'works' do
-        serialized_value = {
-          strings: %w{transparent trans tr},
-          attributes: {'foo' => ['bar']}
-        }
-        expect(@synonym.serialize).to eq(serialized_value)
-      end
-    end
-  end
-
-  describe 'wording' do
-    describe 'serialization' do
-      before :example do
-        @text = 'Trans Blue Green'
-        @phrase1 = WordMonger::Phrase.new(@text)
-        @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
-        @phrase3 = WordMonger::Phrase.new('SeeThrough Aquamarine')
-        @dictionary = WordMonger.active_dictionary
-        @wording = WordMonger::Wordings.new(@phrase1, @phrase2, @phrase3)
-        @wording.add_attribute('foo', 'bar')
-      end
-
-      it 'works' do
-        serialized_value = {
-          strings: [@phrase1,@phrase2,@phrase3].map { |phrase| phrase.text.downcase },
-          attributes: {'foo' => ['bar']}
-        }
-        expect(@wording.serialize).to eq(serialized_value)
-      end
-    end
   end
 
   describe 'dictionary' do
@@ -104,136 +63,6 @@ RSpec.describe WordMonger do
       end
     end
 
-    describe 'synonyms' do
-      describe 'addition' do
-        before :example do
-          @text = 'Trans-Blue Green'
-          @new_phrase = WordMonger::Phrase.new(@text)
-          @dictionary = WordMonger.active_dictionary
-          @synonym = WordMonger::Synonyms.new('transparent','trans', 'tr')
-          @synonym.add_attribute('foo', 'bar')
-          @synonym.add_attribute('foo', 'bat')
-          @synonym.add_attribute('fuu', 'baz')
-        end
-
-        it 'increases the size of the synonym list' do
-          expect(@dictionary.synonyms.size).to eq(1)
-        end
-
-        it 'adds the new synonym to the dictionary' do
-          expect(@dictionary.synonyms.keys.first).to eq('transparent')
-        end
-
-        it 'defines the new synonyms' do
-          expect(@dictionary.synonyms['transparent'].strings).to eq(['transparent','trans', 'tr'])
-        end
-
-        it 'adds the synonyms to the substitutions list' do
-          expect(@dictionary.synonym_substitutions.size).to eq(2)
-        end
-
-        it 'defines the synonym substitutions' do
-          expect(@dictionary.synonym_substitutions['trans']).to eq('transparent')
-          expect(@dictionary.synonym_substitutions['tr']).to eq('transparent')
-        end
-
-        it 'understands attributes' do
-          expect(@synonym.attributes).to eq({
-            'foo' => ['bar','bat'],
-            'fuu' => ['baz']
-          })
-        end
-      end
-
-      describe 'synonymizing' do
-        before :example do
-          @text = 'Trans Blue Green'
-          @new_phrase = WordMonger::Phrase.new(@text)
-          @dictionary = WordMonger.active_dictionary
-          @synonym = WordMonger::Synonyms.new('transparent','trans')
-        end
-
-        it 'works' do
-          expect(@new_phrase.synonymized.text).to eq('Transparent Blue Green')
-        end
-      end
-    end
-
-    describe 'wordings' do
-      describe 'addition' do
-        before :example do
-          @dictionary = WordMonger.active_dictionary
-          @dictionary.reset!
-          @text = 'Trans Blue Green'
-          @phrase1 = WordMonger::Phrase.new(@text)
-          @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
-          @phrase3 = WordMonger::Phrase.new('SeeThrough Aquamarine')
-          @wording = WordMonger::Wordings.new(@phrase1, @phrase2, @phrase3)
-          @wording.add_attribute('foo', 'bar')
-          @wording.add_attribute('foo', 'bat')
-          @wording.add_attribute('fuu', 'baz')
-        end
-
-        it 'increases the size of the wording list' do
-          expect(@dictionary.wordings.size).to eq(1)
-        end
-
-        it 'adds the new wording to the dictionary' do
-          expect(@dictionary.wordings.keys.first).to eq('trans blue green')
-        end
-
-        it 'increases the size of the wording substitutions list' do
-          expect(@dictionary.wording_substitutions.size).to eq(2)
-        end
-
-        it 'defines the wording substitution' do
-          expect(@dictionary.wording_substitutions['translucent aqua']).to eq('trans blue green')
-          expect(@dictionary.wording_substitutions['seethrough aquamarine']).to eq('trans blue green')
-        end
-
-        it 'understands attributes' do
-          expect(@wording.attributes).to eq({
-            'foo' => ['bar','bat'],
-            'fuu' => ['baz']
-          })
-        end
-      end
-
-      describe 'normalizing' do
-        before :example do
-          @text = 'Trans Blue Green'
-          @phrase1 = WordMonger::Phrase.new(@text)
-          @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
-          @dictionary = WordMonger.active_dictionary
-          @wording = WordMonger::Wordings.new(@phrase1, @phrase2)
-        end
-
-        it 'works' do
-          expect(@phrase2.normalized.text).to eq('Trans Blue Green')
-        end
-      end
-    end
-
-    describe 'serialization' do
-      before :example do
-        @text = 'Trans Blue Green'
-        @dictionary = WordMonger.active_dictionary
-        @synonym = WordMonger::Synonyms.new('transparent','trans')
-        @phrase1 = WordMonger::Phrase.new(@text)
-        @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
-        @dictionary = WordMonger.active_dictionary
-        @wording = WordMonger::Wordings.new(@phrase1, @phrase2)
-      end
-
-      it 'produces a hash' do
-        expect(@dictionary.serialize).to be_a(Hash)
-      end
-
-      it 'has the expected keys' do
-        expect(@dictionary.serialize.keys).to eq(%i{words phrases synonyms wordings})
-      end
-    end
-
     describe 'scanner' do
       before :example do
         @text = 'Trans-Blue Green'
@@ -247,6 +76,208 @@ RSpec.describe WordMonger do
         word_text = words.map { |word| word.text }
         expect(word_text).to eq(%w{Trans- Blue Green})
       end
+    end
+    describe 'scanning' do
+      it 'separates words' do
+        phrase = WordMonger::Phrase.new('the quick, Brown fox')
+        words = phrase.words
+        word_text = words.map { |word| word.text }
+        expect(word_text).to eq(%w{the quick Brown fox})
+      end
+    end
+
+    describe 'matching' do
+      before :context do
+        @dictionary = WordMonger.active_dictionary
+        @dictionary.reset!
+        @phrase1 = WordMonger::Phrase.new('Trans Blue')
+        @synonym = WordMonger::Synonyms.new('transparent','trans', 'tr')
+        @phrase2 = WordMonger::Phrase.new('Bricklink::Tr Blue')
+      end
+
+      context "vanilla match (not restricted to lexicon or order-independent)" do
+        it 'finds a match' do
+          expect(@dictionary.matching_phrases('trans Blue').size).to eq(2)
+        end
+      end
+
+      context "restricted to lexicon" do
+        it 'Does not find matches from other lexicons' do
+          expect(@dictionary.matching_phrases('tr Blue', in_lexicon: true).size).to eq(1)
+        end
+      end
+
+    end
+  end
+
+  describe 'synonyms' do
+    describe 'addition' do
+      before :example do
+        @dictionary = WordMonger.active_dictionary
+        @dictionary.reset!
+        @text = 'Trans-Blue Green'
+        @new_phrase = WordMonger::Phrase.new(@text)
+        @synonym_precount = @dictionary.synonyms.size
+        @synonym = WordMonger::Synonyms.new('transparent','trans', 'tr')
+        @synonym.add_attribute('foo', 'bar')
+        @synonym.add_attribute('foo', 'bat')
+        @synonym.add_attribute('fuu', 'baz')
+      end
+
+      it 'increases the size of the synonym list' do
+        expect(@dictionary.synonyms.size - @synonym_precount).to eq(1)
+      end
+
+      it 'adds the new synonym to the dictionary' do
+        expect(@dictionary.synonyms.keys).to include('transparent')
+      end
+
+      it 'defines the new synonyms' do
+        expect(@dictionary.synonyms['transparent'].texts).to eq(['transparent','trans', 'tr'])
+      end
+
+      it 'adds the synonyms to the substitutions list' do
+        expect(@dictionary.synonym_substitutions.size).to eq(2)
+      end
+
+      it 'defines the synonym substitutions' do
+        expect(@dictionary.synonym_substitutions['trans']).to eq('transparent')
+        expect(@dictionary.synonym_substitutions['tr']).to eq('transparent')
+      end
+
+      it 'understands attributes' do
+        expect(@synonym.attributes).to eq({
+          'foo' => ['bar','bat'],
+          'fuu' => ['baz']
+        })
+      end
+    end
+
+    describe 'synonymizing' do
+      before :example do
+        @text = 'Trans Blue Green'
+        @new_phrase = WordMonger::Phrase.new(@text)
+        @dictionary = WordMonger.active_dictionary
+        @synonym = WordMonger::Synonyms.new('transparent','trans')
+      end
+
+      it 'works' do
+        expect(@new_phrase.synonymized.text).to eq('Transparent Blue Green')
+      end
+    end
+
+    describe 'serialization' do
+      before :example do
+        @text = 'Trans-Blue Green'
+        @new_phrase = WordMonger::Phrase.new(@text)
+        @dictionary = WordMonger.active_dictionary
+        @synonym = WordMonger::Synonyms.new('transparent','trans', 'tr')
+        @synonym.add_attribute('foo', 'bar')
+      end
+
+      it 'works' do
+        serialized_value = {
+          texts: %w{transparent trans tr},
+          attributes: {'foo' => ['bar']}
+        }
+        expect(@synonym.serialize).to eq(serialized_value)
+      end
+    end
+  end
+
+  describe 'wordings' do
+    describe 'addition' do
+      before :example do
+        @dictionary = WordMonger.active_dictionary
+        @dictionary.reset!
+        @text = 'Trans Blue Green'
+        @phrase1 = WordMonger::Phrase.new(@text)
+        @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
+        @phrase3 = WordMonger::Phrase.new('SeeThrough Aquamarine')
+        @wording = WordMonger::Wordings.new(@phrase1, @phrase2, @phrase3)
+        @wording.add_attribute('foo', 'bar')
+        @wording.add_attribute('foo', 'bat')
+        @wording.add_attribute('fuu', 'baz')
+      end
+
+      it 'increases the size of the wording list' do
+        expect(@dictionary.wordings.size).to eq(1)
+      end
+
+      it 'adds the new wording to the dictionary' do
+        expect(@dictionary.wordings.keys.first).to eq('trans blue green')
+      end
+
+      it 'increases the size of the wording substitutions list' do
+        expect(@dictionary.wording_substitutions.size).to eq(2)
+      end
+
+      it 'defines the wording substitution' do
+        expect(@dictionary.wording_substitutions['translucent aqua']).to eq('trans blue green')
+        expect(@dictionary.wording_substitutions['seethrough aquamarine']).to eq('trans blue green')
+      end
+
+      it 'understands attributes' do
+        expect(@wording.attributes).to eq({
+          'foo' => ['bar','bat'],
+          'fuu' => ['baz']
+        })
+      end
+    end
+
+    describe 'normalizing' do
+      before :example do
+        @dictionary = WordMonger.active_dictionary
+        @dictionary.reset!
+        @text = 'Trans Blue Green'
+        @phrase1 = WordMonger::Phrase.new(@text)
+        @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
+        @wording = WordMonger::Wordings.new(@phrase1, @phrase2)
+      end
+
+      it 'works' do
+        expect(@phrase2.normalized.text).to eq('Trans Blue Green')
+      end
+    end
+
+    describe 'serialization' do
+      before :example do
+        @text = 'Trans Blue Green'
+        @phrase1 = WordMonger::Phrase.new(@text)
+        @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
+        @phrase3 = WordMonger::Phrase.new('SeeThrough Aquamarine')
+        @dictionary = WordMonger.active_dictionary
+        @wording = WordMonger::Wordings.new(@phrase1, @phrase2, @phrase3)
+        @wording.add_attribute('foo', 'bar')
+      end
+
+      it 'works' do
+        serialized_value = {
+          texts: [@phrase1,@phrase2,@phrase3].map { |phrase| phrase.text.downcase },
+          attributes: {'foo' => ['bar']}
+        }
+        expect(@wording.serialize).to eq(serialized_value)
+      end
+    end
+  end
+
+  describe 'serialization' do
+    before :example do
+      @text = 'Trans Blue Green'
+      @dictionary = WordMonger.active_dictionary
+      @synonym = WordMonger::Synonyms.new('transparent','trans')
+      @phrase1 = WordMonger::Phrase.new(@text)
+      @phrase2 = WordMonger::Phrase.new('Translucent Aqua')
+      @dictionary = WordMonger.active_dictionary
+      @wording = WordMonger::Wordings.new(@phrase1, @phrase2)
+    end
+
+    it 'produces a hash' do
+      expect(@dictionary.serialize).to be_a(Hash)
+    end
+
+    it 'has the expected keys' do
+      expect(@dictionary.serialize.keys).to eq(%i{words phrases synonyms wordings})
     end
   end
 
@@ -324,30 +355,5 @@ RSpec.describe WordMonger do
         expect(@new_word.attributes).to eq({'foo' => ['bar']})
       end
     end
-  end
-
-  describe 'scanning' do
-    it 'separates words' do
-      phrase = WordMonger::Phrase.new('the quick, Brown fox')
-      words = phrase.words
-      word_text = words.map { |word| word.text }
-      expect(word_text).to eq(%w{the quick Brown fox})
-    end
-  end
-
-  describe 'matching' do
-    before :context do
-      @dictionary = WordMonger.active_dictionary
-      @dictionary.reset!
-      @text = 'Trans Blue'
-      @new_phrase = WordMonger::Phrase.new(@text)
-      @dictionary = WordMonger.active_dictionary
-      @synonym = WordMonger::Synonyms.new('transparent','trans', 'tr')
-    end
-
-    it 'finds a match' do
-      expect(@dictionary.matching_phrases('tr Blue').size).to eq(1)
-    end
-
   end
 end

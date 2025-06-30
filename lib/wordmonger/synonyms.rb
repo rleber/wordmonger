@@ -1,23 +1,24 @@
 module WordMonger
   class Synonyms < Equivalents
-    def initialize(*strings, attributes: {}, remember: true)
-      strings = strings.flatten
-      expanded_strings = []
-      strings.each do |string|
-        string = Equivalents.normalize_string(string)
-        synonym = WordMonger.active_dictionary.synonym(string)
+    def initialize(*words, attributes: {}, remember: true)
+      words = words.flatten
+      expanded_words = []
+      words.each do |word|
+        word = Equivalents.normalize_text(word)
+        synonym = WordMonger.active_dictionary.synonym(word)
         if synonym
-          expanded_strings += synonym.strings
+          expanded_words += synonym.words
           synonym.unregister if remember
         else
-          expanded_strings << string
+          expanded_words << word
         end
       end
-      super(*expanded_strings.uniq, attributes: attributes)
+      super(*expanded_words.uniq, attributes: attributes)
       register if remember
     end
 
-    alias words strings
+    alias words texts
+    alias preferred_word preferred_text
 
     def register
       WordMonger.active_dictionary.add_synonym(self)
@@ -27,9 +28,9 @@ module WordMonger
       WordMonger.active_dictionary.delete_synonym(self)
     end
 
-    def make_preferred!(string)
+    def make_preferred!(word)
       unregister
-      super(string)
+      super(word)
       register
     end
 

@@ -1,33 +1,31 @@
-# Equivalents are a set of text strings with equivalent meaning
+# Equivalents are a set of text texts with equivalent meaning
 # Equivalents have a preferred value, which is the first in the list
 module WordMonger
   class Equivalents
-    class EmptyError < StandardError; end
     class PreferredNotFound < StandardError; end
 
-    def self.normalize_string(string)
-      string.downcase
+    def self.normalize_text(text)
+      text.downcase
     end
 
-    attr_reader :strings
+    attr_reader :texts
     attr_accessor :attributes
-    def initialize(*strings, attributes: {})
-      strings = strings.flatten # In case someone passes an array
-      raise EmptyError, "#{self.class} cannot be empty" if strings.size == 0
-      @strings = strings.map { |string| normalize_string(string) }
+    def initialize(*texts, attributes: {})
+      texts = texts.flatten # In case someone passes an array
+      @texts = texts.map { |text| normalize_text(text) }
       @attributes = {}
     end
 
-    def normalize_string(string)
-      self.class.normalize_string(string)
+    def normalize_text(text)
+      self.class.normalize_text(text)
     end
 
-    def add(string, preferred: false)
-      string = normalize_string(string)
+    def add(text, preferred: false)
+      text = normalize_text(text)
       if preferred
-        @strings.unshift(string)
+        @texts.unshift(text)
       else
-        @strings << string
+        @texts << text
       end
     end
 
@@ -36,41 +34,41 @@ module WordMonger
       attributes[name] << value
     end
 
-    def preferred
-      @strings.first
+    def preferred_text
+      @texts.first
     end
 
-    def include?(string)
-      string = normalize_string(string)
-      @strings.include?(string)
+    def include?(text)
+      text = normalize_text(text)
+      @texts.include?(text)
     end
 
-    def index(string)
-      @strings.index(string)
+    def index(text)
+      @texts.index(text)
     end
 
-    def make_preferred!(string)
-      string = normalize(string)
-      i = index(string)
-      raise PreferredNotFound, "#{string.inspect} is not in #{self.inspect}" unless i
-      @strings.delete_at(i)
-      @strings.unshift(string)
+    def make_preferred!(text)
+      text = normalize(text)
+      i = index(text)
+      raise PreferredNotFound, "#{text.inspect} is not in #{self.inspect}" unless i
+      @texts.delete_at(i)
+      @texts.unshift(text)
     end
 
     def merge!(other_equivalent)
-      @strings += other_equivalent.strings
+      @texts += other_equivalent.texts
     end
 
     def serialize
-      serialized_strings = @strings.map do |string|
-        if string.respond_to?(:serialize)
-          string.serialize
+      serialized_texts = @texts.map do |text|
+        if text.respond_to?(:serialize)
+          text.serialize
         else
-          string
+          text
         end
       end
       {
-        strings: @strings,
+        texts: @texts,
         attributes: @attributes
       }
     end
